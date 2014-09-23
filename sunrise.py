@@ -17,15 +17,10 @@ import datetime
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 
-def calculate_bedtime(sleep_duration, sunrise_time):
-    print 'In calculate_bedtime()...'
-    bedtime = 0
-
-    return bedtime  # stub
-
 
 def retrieve_web_sunrise_times(today, city):
     print "In retrieve_web_sunrise_times()..."
+    #driver = webdriver.Firefox()
     driver = webdriver.PhantomJS()  # may need (executable_path='/usr/bin/phantomjs')
     driver.get("http://www.nrc-cnrc.gc.ca/eng/services/sunrise/")
 
@@ -40,15 +35,35 @@ def retrieve_web_sunrise_times(today, city):
 
     elem_day = driver.find_element_by_name("day")
     # TODO fix this for 1 digit days
-    elem_day.send_keys(str(today.day)[0])
-    elem_day.send_keys(str(today.day)[1])  # get TOMORROW not todaaaaayyy!
+
+    tomorrow_string =  str(today.day)[0] + str(int(str(today.day)[1]) +1)  #HACK HACK HACK!
+    elem_day.clear()
+    elem_day.send_keys(tomorrow_string)
+
+    elem_city = driver.find_element_by_id("city")
+    elem_city.send_keys(city, Keys.ENTER)
+
     elem_submit = driver.find_element_by_id("submit")
     elem_submit.click()
 
     table = driver.find_element_by_xpath("//div[@id='wb-main-in']")
     rcol = table.find_elements_by_xpath("//td[@class='align-right']")
+
     sunrise_time = str(rcol[2].text)
+    print "The sun rises tomorrow, the " + tomorrow_string + "th at: " + sunrise_time
+    driver.close()
     return sunrise_time  # stub... it certainly won't be a list returned
+
+def calculate_bedtime(sleep_duration, sunrise_time):
+    print 'In calculate_bedtime()...'
+    bedtime = 1337
+
+    [sunrise_hour, sunrise_minute] = sunrise_time.split(':')
+
+    print "sunrise hour: " + sunrise_hour + ", sunrise minute: " + sunrise_minute
+
+    return bedtime  # stub
+
 
 def get_sunrise(today):
     print "In get_sunrise()..."
@@ -65,6 +80,10 @@ def main():
     # Retrieve info
     today = datetime.date.today()  # can get year, month, day from this
     word_date = datetime.date.ctime(today)
+    print "Today is " + word_date
+    # TODO retrieve a bunch? then reretrieve only when stale, if not, just parse local data
+    sunrise_time = retrieve_web_sunrise_times(today, 'Vancouver')  #TODO let user enter city
+
 
 #    print "Today is " + str(today)
 #    print "A.k.a. " + str(word_date)
@@ -72,7 +91,7 @@ def main():
     # Grab sunrise info from web, if necessary
 
     # Oh man I'm commenting too much...
-    sunrise_time = get_sunrise(today)
+    # I had get_sunrise here...
 
     # Calculate
     bedtime = calculate_bedtime(sleep_duration, sunrise_time)
